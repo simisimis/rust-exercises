@@ -21,23 +21,23 @@ struct Args {
 fn main() {
     let args = Args::parse();
 
-    let responses = get_responses(args.url, 10);
-    let mut responses: Data<_> = Data::new(
-        responses
-            .iter()
-            .map(|(latency, _)| *latency)
-            .collect::<Vec<_>>(),
-    );
+    let attempts: usize = 100;
+    let responses = get_responses(args.url, attempts);
+    let (latencies, uptimes): (Vec<f64>, Vec<StatusCode>) = responses.iter().cloned().unzip();
+    let mut latency: Data<_> = Data::new(latencies);
     if args.latency {
         println!(
             "latency:\np90: {:?},\nmedian: {:?},\nAverage: {:?}",
-            responses.percentile(90),
-            responses.median(),
-            responses.mean()
+            latency.percentile(90),
+            latency.median(),
+            latency.mean()
         );
     }
-    println!("response times: {:#?}", responses);
-    //TODO: count response codes
+    if args.uptime {
+        let success_count = uptimes.iter().filter(|code| code.is_success()).count() as f64;
+
+        println!("Success rate: {}/{}", success_count, uptimes.len());
+    }
 }
 
 fn get_responses(url: Url, amount: usize) -> Vec<(f64, StatusCode)> {

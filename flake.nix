@@ -29,6 +29,7 @@
             pkg-config
             openssl
             just
+            mask
             (fenix.packages.${system}.stable.withComponents [
               "cargo"
               "clippy"
